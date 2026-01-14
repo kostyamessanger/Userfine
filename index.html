@@ -1,1 +1,85 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h2>Мессенджер</h2>
 
+<div id="auth">
+  <input id="user" placeholder="Имя"><br>
+  <input id="pass" placeholder="Пароль" type="password"><br>
+  <button onclick="register()">Создать аккаунт</button>
+  <button onclick="login()">Войти</button>
+</div>
+
+<div id="chat" style="display:none">
+  <h3>Чат</h3>
+  <input id="to" placeholder="Кому">
+  <input id="text" placeholder="Сообщение">
+  <button onclick="send()">Отправить</button>
+  <pre id="messages"></pre>
+</div>
+
+<script>
+const URL = "https://userfine.k90183621.workers.dev/";
+let token = "";
+
+async function register() {
+  let r = await fetch(URL + "/register", {
+    method: "POST",
+    body: JSON.stringify({
+      username: user.value,
+      password: pass.value
+    })
+  });
+
+  if (!r.ok) return alert("Ошибка");
+  token = (await r.json()).token;
+  enter();
+}
+
+async function login() {
+  let r = await fetch(URL + "/login", {
+    method: "POST",
+    body: JSON.stringify({
+      username: user.value,
+      password: pass.value
+    })
+  });
+
+  if (!r.ok) return alert("Неверно");
+  token = (await r.json()).token;
+  enter();
+}
+
+function enter() {
+  auth.style.display = "none";
+  chat.style.display = "block";
+  load();
+}
+
+async function send() {
+  await fetch(URL + "/send", {
+    method: "POST",
+    headers: { token },
+    body: JSON.stringify({
+      to: to.value,
+      text: text.value
+    })
+  });
+  text.value = "";
+  load();
+}
+
+async function load() {
+  let r = await fetch(URL + "/messages", {
+    headers: { token }
+  });
+  let data = await r.json();
+  messages.textContent = data
+    .map(m => `${m.from}: ${m.text}`)
+    .join("\n");
+}
+
+setInterval(load, 1500);
+</script>
+</body>
+</html>
